@@ -25,6 +25,9 @@
 #define CONFIG_FM24CL64B
 //#define CONFIG_FM24V10
 
+#define CONFIG_VFD_NORITAKE
+#define CONFIG_EERAM_48LXXX
+
 // enable in order to have the following led setup:
 // led 2 - on during timer interrupt operation
 // led 3 - on during meter uart operation

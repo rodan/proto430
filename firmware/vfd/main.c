@@ -21,6 +21,9 @@
 #include "jig.h"
 #include "sig.h"
 
+#include "eeram_48l_extra.h"
+#include "vfd_extra.h"
+
 volatile uint8_t port3_last_event;
 volatile uint8_t port5_last_event;
 uint32_t button_down_start;
@@ -67,6 +70,7 @@ void i2c_init(void)
 {
     i2c_pin_init();
 
+#if I2C_USE_DEV > 3
     // enhanced USCI capable microcontroller
     EUSCI_B_I2C_initMasterParam param = {0};
 
@@ -76,8 +80,47 @@ void i2c_init(void)
     param.byteCounterThreshold = 0;
     param.autoSTOPGeneration = EUSCI_B_I2C_NO_AUTO_STOP;
     EUSCI_B_I2C_initMaster(I2C_BASE_ADDR, &param);
+#elif I2C_USE_DEV < 4
+    // USCI capable microcontroller
+    USCI_B_I2C_initMasterParam param = {0};
+
+    param.selectClockSource = USCI_B_I2C_CLOCKSOURCE_SMCLK;
+    param.i2cClk = SMCLK_FREQ;
+    param.dataRate = USCI_B_I2C_SET_DATA_RATE_400KBPS;
+    USCI_B_I2C_initMaster(I2C_BASE_ADDR, &param);
+#endif
 
     i2c_irq_init(I2C_BASE_ADDR);
+}
+
+void spi_init(void)
+{
+
+    spi_pin_init();
+
+#if defined __MSP430_HAS_EUSCI_Bx__
+    EUSCI_B_SPI_initMasterParam param = {0};
+    param.selectClockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK;
+    param.clockSourceFrequency = SMCLK_FREQ;
+    param.desiredSpiClock = 1000000;
+    param.msbFirst= EUSCI_B_SPI_MSB_FIRST;
+    param.clockPhase= EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;
+    param.clockPolarity = EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_HIGH;
+    param.spiMode = EUSCI_B_SPI_3PIN;
+    EUSCI_B_SPI_initMaster(SPI_BASE_ADDR, &param);
+    EUSCI_B_SPI_enable(SPI_BASE_ADDR);
+
+#elif defined __MSP430_HAS_USCI_Bx__
+    USCI_B_SPI_initMasterParam param = {0};
+    param.selectClockSource = USCI_B_SPI_CLOCKSOURCE_SMCLK;
+    param.clockSourceFrequency = SMCLK_FREQ;
+    param.desiredSpiClock = 1000000;
+    param.msbFirst= USCI_B_SPI_MSB_FIRST;
+    param.clockPhase= USCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;
+    param.clockPolarity = USCI_B_SPI_CLOCKPOLARITY_INACTIVITY_HIGH;
+    USCI_B_SPI_initMaster(SPI_BASE_ADDR, &param);
+    USCI_B_SPI_enable(SPI_BASE_ADDR);
+#endif
 }
 
 static void button_31_irq(uint32_t msg)
@@ -407,6 +450,10 @@ int main(void)
     // jig_init();
 
     i2c_init();
+    spi_init();
+
+    EERAM_48L_init();
+    VFD_init();
 
     sig0_off;
     sig1_off;
