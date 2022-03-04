@@ -1,0 +1,61 @@
+
+
+
+1.0 - sig0
+1.1 - sig1
+1.2 - 5v_en
+1.3 - sig2
+1.4 - sig3
+1.5 - sig4
+
+2.0 - uart0
+2.1 - uart0
+
+3.0 - 3v3_en
+3.1 - power button trigger, 3v3_analog
+3.2 - 5v_analog
+3.3 - input or id measurement
+
+5.5 - button
+5.6 - button
+5.7 - pwm
+
+6.0 - uart3
+6.1 - uart3
+6.2 - rs_pwr - used by external intelligent DO probe
+6.3 - dir for rs485
+
+7.0 - i2c
+7.1 - i2c
+
+J.4 - XT1
+J.5 - XT1
+J.6 - XT2
+J.7 - XT2
+
+
+UCA0 - uart0 backchannel console (P2.0 TXD, P2.1 RXD)
+UCA1 - unused (P2.5 P2.6)
+UCA2 - unusable (P5.4 unrouted, P5.5 button, P5.6 button, P5.7)
+UCA3 - uart3 edge interface (P6.0 P6.1)
+UCB0 - sdcard (P1.6 MOSI, P1.7 MISO, P2.2 CLK, P4.0 CS)
+UCB1 - spi ext (P5.0 MOSI, P5.1 MISO, P5.2 CLK, P5.3 ?)
+UCB2 - i2c ext (P7.0, P7.1)
+
+timers:
+
+TA0.0 unusable pin
+TA0.1 nonblocking uart3 interchar timeout
+TA0.2 nonblocking edge state machine
+
+TA1.0 unusable pin
+TA1.1 nonblocking ?
+TA1.2 blocking    dir activation for edge DO RS485
+
+TA2.0 
+TA2.1 systime (increments every 10ms)
+TA2.2 unused
+
+TA4.1 pwm
+
+

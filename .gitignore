@@ -1,0 +1,14 @@
+build
+build/*
+qa/*
+gerber/*
+tags
+resources.c
+.*.swp
+*.o
+*~
+*.patch
+*.lck
+*.b#?
+*.s#?
+tags
