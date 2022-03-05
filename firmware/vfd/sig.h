@@ -36,12 +36,4 @@
 #define sig7_off             P4OUT &= ~BIT3
 #define sig7_switch          P4OUT ^= BIT3
 
-#define sig8_on              P2OUT |= BIT5
-#define sig8_off             P2OUT &= ~BIT5
-#define sig8_switch          P2OUT ^= BIT5
-
-#define sig9_on              P2OUT |= BIT6
-#define sig9_off             P2OUT &= ~BIT6
-#define sig9_switch          P2OUT ^= BIT6
-
 #endif

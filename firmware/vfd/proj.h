@@ -41,7 +41,8 @@
 #define             SYS_MSG_P57_INT  0x10000  // P5.7 interrupt
 #define       SYS_MSG_P55_TMOUT_INT  0x20000  // P5.5 long press
 #define       SYS_MSG_P56_TMOUT_INT  0x40000  // P5.6 long press
-#define        SYS_MSG_TIMERA2_CCR1  0x80000  // timer_a2_delay_noblk_ccr1
+#define       SYS_MSG_P57_TMOUT_INT  0x80000  // P5.7 long press
+#define        SYS_MSG_TIMERA2_CCR1  0x100000  // timer_a2_delay_noblk_ccr1
 
 #define       SCHEDULE_POWER_SAVING TIMER_A2_SLOT_0
 #define          SCHEDULE_PB_31_OFF TIMER_A2_SLOT_1
@@ -49,9 +50,9 @@
 #define            SCHEDULE_LED_OFF TIMER_A2_SLOT_3
 #define          SCHEDULE_ADC_2CELL TIMER_A2_SLOT_4
 #define          SCHEDULE_ADC_1CELL TIMER_A2_SLOT_5
-//#define             SCHEDULE_ADC_ID TIMER_A2_SLOT_6
-#define              SCHEDULE_PB_55 TIMER_A2_SLOT_7
-#define              SCHEDULE_PB_56 TIMER_A2_SLOT_8
+#define              SCHEDULE_PB_55 TIMER_A2_SLOT_6
+#define              SCHEDULE_PB_56 TIMER_A2_SLOT_7
+#define              SCHEDULE_PB_57 TIMER_A2_SLOT_8
 
 //#define          POWER_SAVING_DELAY 180000UL // 100=1s, 6000=1m
 //#define          POWER_SAVING_DELAY 1440000UL // 4h 100=1s, 6000=1m

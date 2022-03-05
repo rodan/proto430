@@ -15,12 +15,13 @@
 #include "glue.h"
 #include "ui.h"
 #include "timer_a2.h"
+#include "timer_a3.h"
 #include "adc.h"
 #include "list_helper.h"
 #include "version.h"
 #include "jig.h"
 #include "sig.h"
-
+#include "rotary_encoder.h"
 #include "eeram_48l_extra.h"
 #include "vfd_extra.h"
 
@@ -184,6 +185,21 @@ static void button_56_irq(uint32_t msg)
 static void button_56_long_press_irq(uint32_t msg)
 {
     uart_print(&bc, "PB56 long\r\n");
+}
+
+static void button_57_irq(uint32_t msg)
+{
+    if (P5IN & BIT7) {
+        sig0_off;
+        timer_a2_set_trigger_slot(SCHEDULE_PB_57, 0, TIMER_A2_EVENT_DISABLE);
+    } else {
+        timer_a2_set_trigger_slot(SCHEDULE_PB_57, systime() + 100, TIMER_A2_EVENT_ENABLE);
+    }
+}
+
+static void button_57_long_press_irq(uint32_t msg)
+{
+    uart_print(&bc, "PB57 long\r\n");
 }
 
 /*
@@ -380,6 +396,9 @@ void check_events(void)
         if (ev & (1 << SCHEDULE_PB_56)) {
             msg |= SYS_MSG_P56_TMOUT_INT;
         }
+        if (ev & (1 << SCHEDULE_PB_57)) {
+            msg |= SYS_MSG_P57_TMOUT_INT;
+        }
         timer_a2_rst_event_schedule();
     }
 
@@ -433,7 +452,8 @@ int main(void)
 
     //timer_a0_init();            //
     //timer_a1_init();            //
-    timer_a2_init();            // systime()
+    timer_a2_init();    // scheduler, systime()
+    timer_a3_init();    // rotary decoder
 
     bc.baseAddress = EUSCI_A0_BASE;
     bc.baudrate = BAUDRATE_57600;
@@ -448,6 +468,8 @@ int main(void)
 
     adc_init(ADC_2_CELL);
     // jig_init();
+
+    rot_enc_init();
 
     i2c_init();
     spi_init();
@@ -465,10 +487,12 @@ int main(void)
     eh_register(&button_31_irq, SYS_MSG_P31_INT);
     eh_register(&button_55_irq, SYS_MSG_P55_INT);
     eh_register(&button_56_irq, SYS_MSG_P56_INT);
+    eh_register(&button_57_irq, SYS_MSG_P57_INT);
 
     eh_register(&poweroff_irq, SYS_MSG_SCH_POWEROFF);
     eh_register(&button_55_long_press_irq, SYS_MSG_P55_TMOUT_INT);
     eh_register(&button_56_long_press_irq, SYS_MSG_P56_TMOUT_INT);
+    eh_register(&button_57_long_press_irq, SYS_MSG_P57_TMOUT_INT);
 
 #ifdef P31_ADC
     eh_register(&adc_1cell_conv_start, SYS_MSG_SCH_CONV_1CELL);
@@ -488,9 +512,9 @@ int main(void)
     P3IE |= BIT1;
 
     // Reset IRQ flags
-    P5IFG &= ~(BIT5 | BIT6);
+    P5IFG &= ~(BIT5 | BIT6 | BIT7);
     // Enable button interrupt
-    P5IE |= BIT5 | BIT6;
+    P5IE |= BIT5 | BIT6 | BIT7;
 
     // fake button interrupt so we read the battery voltage
     button_31_irq(0);
