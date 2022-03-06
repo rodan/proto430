@@ -14,6 +14,7 @@
 #include "driverlib.h"
 #include "glue.h"
 #include "ui.h"
+#include "timer_a1.h"
 #include "timer_a2.h"
 #include "timer_a3.h"
 #include "adc.h"
@@ -24,6 +25,7 @@
 #include "rotary_encoder.h"
 #include "eeram_48l_extra.h"
 #include "vfd_extra.h"
+#include "ir_remote_extra.h"
 
 volatile uint8_t port3_last_event;
 volatile uint8_t port5_last_event;
@@ -335,6 +337,12 @@ static void uart_bcl_rx_irq(uint32_t msg)
                               TIMER_A2_EVENT_ENABLE);
 }
 
+static void ir_remote_irq(uint32_t msg)
+{
+    sig7_switch;
+    ir_remote_mng();
+}
+
 void check_events(void)
 {
     uint32_t msg = SYS_MSG_NULL;
@@ -358,17 +366,15 @@ void check_events(void)
         }
         timer_a0_rst_event();
     }
+    #endif
     // timer_a1
     ev = timer_a1_get_event();
     if (ev) {
-        if (ev & TIMER_A1_EVENT_CCR1) {
-            msg |= SYS_MSG_TIMERA1_CCR1;
-        } else if (ev & TIMER_A1_EVENT_CCR2) {
-            msg |= SYS_MSG_TIMERA1_CCR2;
+        if (ev & TIMER_A1_EVENT_CCR0) {
+            msg |= SYS_MSG_TIMERA1_CCR0;
         }
         timer_a1_rst_event();
     }
-    #endif
     // timer_a2
     ev = timer_a2_get_event();
     if (ev) {
@@ -451,7 +457,7 @@ int main(void)
     clock_init();
 
     //timer_a0_init();            //
-    //timer_a1_init();            //
+    timer_a1_init();    // decoder for IR receiver
     timer_a2_init();    // scheduler, systime()
     timer_a3_init();    // rotary decoder
 
@@ -470,6 +476,7 @@ int main(void)
     // jig_init();
 
     rot_enc_init();
+    ir_remote_init(IR_RST_SM);
 
     i2c_init();
     spi_init();
@@ -494,6 +501,7 @@ int main(void)
     eh_register(&button_56_long_press_irq, SYS_MSG_P56_TMOUT_INT);
     eh_register(&button_57_long_press_irq, SYS_MSG_P57_TMOUT_INT);
 
+    eh_register(&ir_remote_irq, SYS_MSG_TIMERA1_CCR0);
 #ifdef P31_ADC
     eh_register(&adc_1cell_conv_start, SYS_MSG_SCH_CONV_1CELL);
 #endif

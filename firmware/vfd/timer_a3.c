@@ -29,7 +29,6 @@ void timer3_A1_ISR(void)
     sig2_on;
 #endif
     if (iv == TAIV__TACCR1) {
-        sig5_on;
         // timer used by timer_a2_delay_noblk_ccr1()
         // disable interrupt
         TA3CCTL1 = 0;

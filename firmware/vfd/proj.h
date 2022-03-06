@@ -25,7 +25,7 @@
 #define                SYS_MSG_NULL  0
 //#define        SYS_MSG_TIMERA0_CCR1  0x1      // timer_a0_delay_noblk_ccr1
 //#define        SYS_MSG_TIMERA0_CCR2  0x2      // timer_a0_delay_noblk_ccr2
-//#define        SYS_MSG_TIMERA1_CCR1  0x4      // timer_a1_delay_noblk_ccr1
+#define        SYS_MSG_TIMERA1_CCR0  0x4      // IR decoder
 //#define        SYS_MSG_TIMERA1_CCR2  0x8      // timer_a1_delay_noblk_ccr2
 //#define          SYS_MSG_TIMER0_IFG  0x10     // timer0 overflow
 #define         SYS_MSG_UART_BCL_RX  0x20     // UART received something

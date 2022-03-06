@@ -29,12 +29,10 @@ void rot_enc_init(void)
 
 void rot_enc_increment(void)
 {
-    sig6_switch;
 }
 
 void rot_enc_decrement(void)
 {
-    sig7_switch;
 }
 
 
@@ -56,7 +54,6 @@ void __attribute__ ((interrupt(PORT8_VECTOR))) port8_isr_handler(void)
         //_BIC_SR_IRQ(LPM3_bits);
         
         if (enc.debouncing_A == 0) {
-            sig5_off;
             enc.debouncing_A = 1;
             enc.change_A = ROT_ENC_CHA_IN;
             enc.debounced_B = ROT_ENC_CHB_IN; // consider B debounced

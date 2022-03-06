@@ -29,6 +29,7 @@
 #define CONFIG_EERAM_48LXXX
 
 #define CONFIG_ROT_ENCODER
+#define CONFIG_IR_RECEIVER
 
 // enable in order to have the following led setup:
 // led 2 - on during timer interrupt operation
