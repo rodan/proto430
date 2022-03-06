@@ -55,10 +55,12 @@ void parse_user_input(void)
     char *input = uart_get_rx_buf(&bc);
 #endif
     char f = input[0];
-    char sconv[CONV_BASE_10_BUF_SZ];
     //uint32_t in=0;
     uint8_t val = 0;
+#ifdef CONFIG_DS3231
     struct ts t;
+    char sconv[CONV_BASE_10_BUF_SZ];
+#endif
 
     if (f == '?') {
         display_menu();
@@ -70,6 +72,7 @@ void parse_user_input(void)
         EERAM_48L_read_streg(&spid_eeram, &val);
     } else if (strstr(input, "sw")) {
         EERAM_48L_write_streg(&spid_eeram, EERAM_48L512_SR_ASE );
+#ifdef CONFIG_DS3231
     } else if (strstr(input, "tr")) {
         DS3231_get(I2C_BASE_ADDR, &t);
 
@@ -106,6 +109,7 @@ void parse_user_input(void)
         t.unixtime = 0;
 #endif
         DS3231_set(I2C_BASE_ADDR, t);
+#endif
     } else {
         //uart_tx_str("\r\n", 2);
     }

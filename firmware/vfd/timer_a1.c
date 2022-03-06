@@ -8,6 +8,8 @@
 //   available from:  https://github.com/rodan/
 //   license:         GNU GPLv3
 
+#ifdef CONFIG_IR_RECEIVER
+
 #include <stdint.h>
 #include "glue.h"
 #include "proj.h"
@@ -64,15 +66,4 @@ void timer1_A0_ISR(void)
     }
 }
 
-/*
-__attribute__ ((interrupt(TIMER1_A1_VECTOR)))
-void timer1_A1_ISR(void)
-{
-    uint16_t iv = TA1IV;
-    if (iv == TA1IV_TA1CCR1) {
-        timer_a1_last_event |= TIMER1_EVENT_CCR1;
-    } else if (iv == TA1IV_TA1CCR2) {
-        timer_a1_last_event |= TIMER1_EVENT_CCR2;
-    }
-}
-*/
+#endif

@@ -337,11 +337,13 @@ static void uart_bcl_rx_irq(uint32_t msg)
                               TIMER_A2_EVENT_ENABLE);
 }
 
+#ifdef CONFIG_IR_RECEIVER
 static void ir_remote_irq(uint32_t msg)
 {
     sig7_switch;
     ir_remote_mng();
 }
+#endif
 
 void check_events(void)
 {
@@ -368,6 +370,7 @@ void check_events(void)
     }
     #endif
     // timer_a1
+#ifdef CONFIG_IR_RECEIVER
     ev = timer_a1_get_event();
     if (ev) {
         if (ev & TIMER_A1_EVENT_CCR0) {
@@ -375,6 +378,7 @@ void check_events(void)
         }
         timer_a1_rst_event();
     }
+#endif
     // timer_a2
     ev = timer_a2_get_event();
     if (ev) {
@@ -457,7 +461,6 @@ int main(void)
     clock_init();
 
     //timer_a0_init();            //
-    timer_a1_init();    // decoder for IR receiver
     timer_a2_init();    // scheduler, systime()
     timer_a3_init();    // rotary decoder
 
@@ -476,7 +479,10 @@ int main(void)
     // jig_init();
 
     rot_enc_init();
+
+#ifdef CONFIG_IR_RECEIVER
     ir_remote_init(IR_RST_SM);
+#endif
 
     i2c_init();
     spi_init();
@@ -501,7 +507,9 @@ int main(void)
     eh_register(&button_56_long_press_irq, SYS_MSG_P56_TMOUT_INT);
     eh_register(&button_57_long_press_irq, SYS_MSG_P57_TMOUT_INT);
 
+#ifdef CONFIG_IR_RECEIVER
     eh_register(&ir_remote_irq, SYS_MSG_TIMERA1_CCR0);
+#endif
 #ifdef P31_ADC
     eh_register(&adc_1cell_conv_start, SYS_MSG_SCH_CONV_1CELL);
 #endif

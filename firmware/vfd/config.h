@@ -20,16 +20,16 @@
 #define SPI_BASE_ADDR EUSCI_B1_BASE
 
 #define USE_I2C_MASTER
-#define CONFIG_DS3231
-#define CONFIG_CYPRESS_FM24
-#define CONFIG_FM24CL64B
+//#define CONFIG_DS3231
+//#define CONFIG_CYPRESS_FM24
+//#define CONFIG_FM24CL64B
 //#define CONFIG_FM24V10
 
 #define CONFIG_VFD_NORITAKE
 #define CONFIG_EERAM_48LXXX
 
 #define CONFIG_ROT_ENCODER
-#define CONFIG_IR_RECEIVER
+//#define CONFIG_IR_RECEIVER
 
 // enable in order to have the following led setup:
 // led 2 - on during timer interrupt operation

@@ -44,7 +44,6 @@ void EERAM_48L_init(void)
 
     // disable automatic backup to eeprom
     EERAM_48L_write_streg(&spid_eeram, EERAM_48L512_SR_ASE);
-
 }
 
 
