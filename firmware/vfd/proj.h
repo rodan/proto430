@@ -31,7 +31,7 @@
 #define         SYS_MSG_UART_BCL_RX  0x20     // UART received something
 #define             SYS_MSG_P31_INT  0x80     // P3.1 interrupt
 #define        SYS_MSG_SCH_POWEROFF  0x100    // timer_a2 schedule slot
-//#define          SYS_MSG_SCH_LED_ON  0x200    // timer_a2 schedule slot
+#define         SYS_MSG_VFD_REFRESH  0x200    // timer_a2 schedule slot
 //#define         SYS_MSG_SCH_LED_OFF  0x400    // timer_a2 schedule slot
 #define        SYS_MSG_ADC_CONV_RDY  0x800    // adc conversion is ready
 #define      SYS_MSG_SCH_CONV_2CELL  0x1000   // start adc conversion
@@ -53,6 +53,7 @@
 #define              SCHEDULE_PB_55 TIMER_A2_SLOT_6
 #define              SCHEDULE_PB_56 TIMER_A2_SLOT_7
 #define              SCHEDULE_PB_57 TIMER_A2_SLOT_8
+#define        SCHEDULE_VFD_REFRESH TIMER_A2_SLOT_9
 
 //#define          POWER_SAVING_DELAY 180000UL // 100=1s, 6000=1m
 //#define          POWER_SAVING_DELAY 1440000UL // 4h 100=1s, 6000=1m

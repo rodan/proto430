@@ -202,6 +202,9 @@ static void button_57_irq(uint32_t msg)
 static void button_57_long_press_irq(uint32_t msg)
 {
     uart_print(&bc, "PB57 long\r\n");
+
+    rail_5v_on;
+    timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
 }
 
 /*
@@ -237,6 +240,12 @@ void halt(void)
     sig2_off;
     sig3_off;
     sig4_off;
+}
+
+static void vfd_refresh(uint32_t msg)
+{
+    ui_vfd_refresh();
+    timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
 }
 
 static void adc_rdy_irq(uint32_t msg)
@@ -340,7 +349,6 @@ static void uart_bcl_rx_irq(uint32_t msg)
 #ifdef CONFIG_IR_RECEIVER
 static void ir_remote_irq(uint32_t msg)
 {
-    sig7_switch;
     ir_remote_mng();
 }
 #endif
@@ -409,6 +417,10 @@ void check_events(void)
         if (ev & (1 << SCHEDULE_PB_57)) {
             msg |= SYS_MSG_P57_TMOUT_INT;
         }
+        if (ev & (1 << SCHEDULE_VFD_REFRESH)) {
+            msg |= SYS_MSG_VFD_REFRESH;
+        }
+
         timer_a2_rst_event_schedule();
     }
 
@@ -517,6 +529,8 @@ int main(void)
     eh_register(&adc_rdy_irq, SYS_MSG_ADC_CONV_RDY);
 
     eh_register(&scheduler_irq, SYS_MSG_TIMERA2_CCR1);
+    eh_register(&vfd_refresh, SYS_MSG_VFD_REFRESH);
+
     timer_a2_set_trigger_slot(SCHEDULE_POWER_SAVING, POWER_SAVING_DELAY, TIMER_A2_EVENT_ENABLE);
 //    timer_a2_set_trigger_slot(SCHEDULE_LED_ON, 200, TIMER_A2_EVENT_ENABLE);
 

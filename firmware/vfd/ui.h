@@ -8,4 +8,6 @@ void display_menu(void);
 void display_test(void);
 void parse_user_input(void);
 
+void ui_vfd_refresh(void);
+
 #endif

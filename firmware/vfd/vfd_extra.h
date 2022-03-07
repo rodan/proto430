@@ -2,6 +2,8 @@
 #define __VFD_EXTRA_H__
 
 extern spi_descriptor spid_vfd;
+extern vfd_descriptor vfdd;
+
 
 #ifdef __cplusplus
 extern "C" {

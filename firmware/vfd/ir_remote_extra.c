@@ -15,9 +15,9 @@ void ir_remote_init(const uint8_t flag)
     IR_DIR &= ~IR_PIN;
     // activate on a high-to-low transition
     IR_IES |= IR_PIN;
-    // Reset IRQ flags
+    // reset IRQ flags
     IR_IFG &= ~IR_PIN;
-    // Enable button interrupt
+    // enable interrupt
     IR_IE |= IR_PIN;
 
     if (flag & IR_RST_SM) {
@@ -36,7 +36,6 @@ void ir_remote_mng(void)
     char buf[CONV_BASE_10_BUF_SZ];
 
     if (ir_decode(&results)) {
-        sig6_switch;
 
         ir_number = -1;
 

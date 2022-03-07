@@ -3,6 +3,7 @@
 #include <string.h>
 #include "glue.h"
 #include "version.h"
+#include "timer_a2.h"
 #include "eeram_48l_extra.h"
 #include "vfd_extra.h"
 #include "rtca_now.h"
@@ -17,6 +18,8 @@ static const char menu_str[]="\
 \033[33;1mtr/tw\033[0m  - test rtc\r\n\
 \033[33;1msr/sw\033[0m  - test eeram\r\n";
 
+//static uint8_t test_str[]={0x1b, '@', 'H', 'e', 'l', 'l', 'o', 0x1f, 0x28, 'g', 0x40, };
+
 void display_menu(void)
 {
     display_version();
@@ -30,6 +33,48 @@ void display_version(void)
     uart_print(&bc, "vfd demo b");
     uart_print(&bc, _utoa(sconv, BUILD));
     uart_print(&bc, "\r\n");
+}
+
+void ui_vfd_refresh(void)
+{
+    char sconv[CONV_BASE_10_BUF_SZ];
+    uint16_t rnd;
+
+    rnd = 146 - (rand() % 20);
+
+    vfd_cmd_clear(&vfdd);
+    //vfd_tx_str(&vfdd, (char *) test_str, 7);
+    //vfd_print(&vfdd, "Hello");
+    vfd_us_cmd(&vfdd, 'g', 0x40);
+    vfd_tx(&vfdd, 2);
+    vfd_tx(&vfdd, 2);
+    vfd_print(&vfdd, " ");
+    vfd_print(&vfdd, _utoa(sconv, rnd));
+    vfd_print(&vfdd, ".1 ");
+    vfd_tx(&vfdd, 0xe6);
+    vfd_print(&vfdd, "S ");
+
+    rnd = 25 - (rand() % 3);
+    vfd_us_cmd(&vfdd, 'g', 0x40);
+    vfd_tx(&vfdd, 1);
+    vfd_tx(&vfdd, 1);
+    vfd_print(&vfdd, "                    ");
+    vfd_print(&vfdd, "   ");
+    vfd_print(&vfdd, _utoa(sconv, rnd));
+    vfd_tx(&vfdd, 0xf8);
+    vfd_print(&vfdd, "C   ");
+
+#ifdef CONFIG_DS3231
+    struct ts t;
+
+    DS3231_get(I2C_BASE_ADDR, &t);
+
+    vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.hour), PAD_ZEROES, 2));
+    vfd_print(&vfdd, ":");
+    vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.min), PAD_ZEROES, 2));
+    vfd_print(&vfdd, ":");
+    vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.sec), PAD_ZEROES, 2));
+#endif
 }
 
 #define PARSER_CNT 16
@@ -66,8 +111,16 @@ void parse_user_input(void)
         display_menu();
     } else if (strstr(input, "5v on")) {
         rail_5v_on;
+        //vfd_cmd_init(&vfdd);
     } else if (strstr(input, "5v off")) {
+        timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, 0, TIMER_A2_EVENT_DISABLE);
         rail_5v_off;
+    } else if (strstr(input, "vfd")) {
+        ui_vfd_refresh();
+        timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
+    } else if (strstr(input, "clr")) {
+        timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, 0, TIMER_A2_EVENT_DISABLE);
+        vfd_cmd_clear(&vfdd);
     } else if (strstr(input, "sr")) {
         EERAM_48L_read_streg(&spid_eeram, &val);
     } else if (strstr(input, "sw")) {

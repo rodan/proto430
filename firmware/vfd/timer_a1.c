@@ -53,7 +53,6 @@ void timer_a1_rst_event(void)
 __attribute__ ((interrupt(TIMER1_A0_VECTOR)))
 void timer1_A0_ISR(void)
 {
-    sig5_switch;
     if (TA1CCR0 == IR_CCR) {
         timer_a1_decode_timeout++;
         timer_a1_last_event |= TIMER_A1_EVENT_CCR0;

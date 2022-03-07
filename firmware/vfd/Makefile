@@ -29,6 +29,7 @@ GDB              = $(GCC_BIN_DIR)/msp430-elf-gdb
 
 CFLAGS       := -D__$(DEVICE)__ -mmcu=$(DEVICE) # -g -DDEPRECATED
 CFLAGS       += -Wall -Wno-switch -Wno-int-to-pointer-cast
+CFLAGS       += -finline-functions
 CFLAGS       += $(CFLAGS_EXTRA)
 #CFLAGS       += -pedantic
 CFLAGS       += -Werror
