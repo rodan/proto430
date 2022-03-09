@@ -36,6 +36,7 @@ uint32_t vbat_cell_2;
 uint32_t vbat_cell_t;
 
 uart_descriptor bc; // backchannel uart interface
+extern struct ts t;
 
 #define ADC_REFRESH_INTERVAL 3600UL // time in seconds between consecutive measurements of the battery voltage
 
@@ -160,10 +161,8 @@ static void button_31_irq(uint32_t msg)
 static void button_55_irq(uint32_t msg)
 {
     if (P5IN & BIT5) {
-        //sig2_off;
         timer_a2_set_trigger_slot(SCHEDULE_PB_55, 0, TIMER_A2_EVENT_DISABLE);
     } else {
-        //sig2_on;
         timer_a2_set_trigger_slot(SCHEDULE_PB_55, systime() + 100, TIMER_A2_EVENT_ENABLE);
     }
 }
@@ -171,7 +170,6 @@ static void button_55_irq(uint32_t msg)
 static void button_55_long_press_irq(uint32_t msg)
 {
     uart_print(&bc, "PB55 long\r\n");
-    //sig2_off;
 }
 
 static void button_56_irq(uint32_t msg)
@@ -205,6 +203,7 @@ static void button_57_long_press_irq(uint32_t msg)
 
     rail_5v_on;
     timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
+    timer_a2_set_trigger_slot(SCHEDULE_RTC_REFRESH, systime()+20, TIMER_A2_EVENT_ENABLE);
 }
 
 /*
@@ -246,6 +245,12 @@ static void vfd_refresh(uint32_t msg)
 {
     ui_vfd_refresh();
     timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
+}
+
+static void rtc_refresh(uint32_t msg)
+{
+    DS3231_get(I2C_BASE_ADDR, &t);
+    timer_a2_set_trigger_slot(SCHEDULE_RTC_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
 }
 
 static void adc_rdy_irq(uint32_t msg)
@@ -359,6 +364,7 @@ void check_events(void)
     uint16_t ev;
 
     sig2_on;
+    sig3_on;
 
     // uart RX
     if (uart_get_event(&bc) & UART_EV_RX) {
@@ -420,6 +426,9 @@ void check_events(void)
         if (ev & (1 << SCHEDULE_VFD_REFRESH)) {
             msg |= SYS_MSG_VFD_REFRESH;
         }
+        if (ev & (1 << SCHEDULE_RTC_REFRESH)) {
+            msg |= SYS_MSG_RTC_REFRESH;
+        }
 
         timer_a2_rst_event_schedule();
     }
@@ -454,6 +463,7 @@ void check_events(void)
         }
     }
 
+    sig3_off;
     eh_exec(msg);
     sig2_off;
 }
@@ -530,6 +540,7 @@ int main(void)
 
     eh_register(&scheduler_irq, SYS_MSG_TIMERA2_CCR1);
     eh_register(&vfd_refresh, SYS_MSG_VFD_REFRESH);
+    eh_register(&rtc_refresh, SYS_MSG_RTC_REFRESH);
 
     timer_a2_set_trigger_slot(SCHEDULE_POWER_SAVING, POWER_SAVING_DELAY, TIMER_A2_EVENT_ENABLE);
 //    timer_a2_set_trigger_slot(SCHEDULE_LED_ON, 200, TIMER_A2_EVENT_ENABLE);

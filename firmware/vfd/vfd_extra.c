@@ -7,6 +7,7 @@
 //#include "spi.h"
 //#include "lib_convert.h"
 //#include "lib_time.h"
+#include "sig.h"
 #include "eeram_48l_extra.h"
 
 spi_descriptor spid_vfd;
@@ -85,9 +86,12 @@ void __attribute__ ((interrupt(PORT4_VECTOR))) port4_isr_handler(void)
 {
     uint8_t t;
 
+    sig7_on;
+
     switch (P4IV) {
     case P4IV__P4IFG4:
         if (ringbuf_get(&vfdd.rbtx, &t)) {
+            sig6_on;
             vfdd.tx_busy = 1;
             vfdd.spid->cs_low();
             spi_write_frame(vfdd.spid->baseAddress, &t, 1);
@@ -99,6 +103,8 @@ void __attribute__ ((interrupt(PORT4_VECTOR))) port4_isr_handler(void)
         _BIC_SR_IRQ(LPM3_bits);
         break;
     }
+    sig6_off;
+    sig7_off;
     P4IFG = 0;
 }
 

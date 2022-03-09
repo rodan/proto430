@@ -10,6 +10,11 @@
 #include "ui.h"
 
 extern uart_descriptor bc;
+uint8_t brightness = 1;
+
+#ifdef CONFIG_DS3231
+    struct ts t;
+#endif
 
 static const char menu_str[]="\
  available commands:\r\n\r\n\
@@ -18,7 +23,7 @@ static const char menu_str[]="\
 \033[33;1mtr/tw\033[0m  - test rtc\r\n\
 \033[33;1msr/sw\033[0m  - test eeram\r\n";
 
-//static uint8_t test_str[]={0x1b, '@', 'H', 'e', 'l', 'l', 'o', 0x1f, 0x28, 'g', 0x40, };
+//uint8_t refresh_timer;
 
 void display_menu(void)
 {
@@ -39,10 +44,26 @@ void ui_vfd_refresh(void)
 {
     char sconv[CONV_BASE_10_BUF_SZ];
     uint16_t rnd;
+    uint8_t data[3];
+
+#ifdef CONFIG_DS3231
+    //memset(&t, 0, sizeof(struct ts));
+    //DS3231_get(I2C_BASE_ADDR, &t);
+#endif
 
     rnd = 146 - (rand() % 20);
 
-    vfd_cmd_clear(&vfdd);
+    //if (!refresh_timer) {
+    //    vfd_cmd_clear(&vfdd);
+    //    refresh_timer = 5;
+    //}
+
+    data[0] = 0x1f;
+    data[1] = 0x58;
+    data[2] = brightness;
+    vfd_tx_str(&vfdd, (char *)data, 3);
+
+    //vfd_cmd_clear(&vfdd);
     //vfd_tx_str(&vfdd, (char *) test_str, 7);
     //vfd_print(&vfdd, "Hello");
     vfd_us_cmd(&vfdd, 'g', 0x40);
@@ -65,10 +86,6 @@ void ui_vfd_refresh(void)
     vfd_print(&vfdd, "C   ");
 
 #ifdef CONFIG_DS3231
-    struct ts t;
-
-    DS3231_get(I2C_BASE_ADDR, &t);
-
     vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.hour), PAD_ZEROES, 2));
     vfd_print(&vfdd, ":");
     vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.min), PAD_ZEROES, 2));
@@ -117,7 +134,7 @@ void parse_user_input(void)
         rail_5v_off;
     } else if (strstr(input, "vfd")) {
         ui_vfd_refresh();
-        timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
+        //timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
     } else if (strstr(input, "clr")) {
         timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, 0, TIMER_A2_EVENT_DISABLE);
         vfd_cmd_clear(&vfdd);

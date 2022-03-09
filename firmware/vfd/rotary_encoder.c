@@ -10,7 +10,7 @@
 encoder_t enc;
 volatile uint8_t port8_last_event;
 static uint8_t rot_enc_changed;
-static uint8_t brightness = 8;
+extern uint8_t brightness;
 
 void rot_enc_init(void)
 {
@@ -32,27 +32,15 @@ void rot_enc_init(void)
 
 void rot_enc_increment(void)
 {
-    uint8_t data[3];
-    data[0] = 0x1f;
-    data[1] = 0x58;
-
     if (brightness < 8) {
         brightness++;
-        data[2] = brightness;
-        vfd_tx_str(&vfdd, (char *)data, 3);
     }
 }
 
 void rot_enc_decrement(void)
 {
-    uint8_t data[3];
-    data[0] = 0x1f;
-    data[1] = 0x58;
-
     if (brightness > 2) {
         brightness--;
-        data[2] = brightness;
-        vfd_tx_str(&vfdd, (char *)data, 3);
     }
 }
 
