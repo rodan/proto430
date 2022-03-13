@@ -19,6 +19,7 @@ struct jig_t {
     uint16_t build;
 } __attribute__ ((packed));
 
+void jig_7000_init();
 void jig_set_output(const uint8_t type);
 uint8_t jig_get_output(void);
 struct jig_t *jig_get_p(void);

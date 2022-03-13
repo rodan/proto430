@@ -4,12 +4,64 @@
 #include "glue.h"
 #include "jig.h"
 
+spi_descriptor spid_jig_7000;
 static uint8_t jig_output = JIG_OUTPUT_HR;      // type of output data formatting. see JIG_OUTPUT_* defines
 static struct jig_t jig;
+//static struct jig_t jig_7000;
 
 struct jig_t *jig_get_p(void)
 {
     return &jig;
+}
+
+void jig_7000_CS_high()
+{
+    P5OUT |= BIT3;
+}
+
+void jig_7000_CS_low()
+{
+    P5OUT &= ~BIT3;
+}
+
+uint8_t jig_7000_BSY(void)
+{
+    uint8_t rv;
+
+    if (P3IN & BIT7) {
+        rv = 1;
+    } else {
+        rv = 0;
+    }
+
+    return rv;
+}
+
+static void jig_7000_rdy(uint32_t msg)
+{
+
+
+}
+
+void jig_7000_init(void)
+{
+    // BSY pin
+    P3DIR &= ~BIT7;
+    P3IFG &= ~BIT7;
+
+    jig_7000_CS_high();
+
+    spid_jig_7000.baseAddress = SPI_BASE_ADDR;
+    spid_jig_7000.cs_low = jig_7000_CS_low;
+    spid_jig_7000.cs_high = jig_7000_CS_high;
+    spid_jig_7000.dev_is_busy = jig_7000_BSY;
+
+    eh_register(&jig_7000_rdy, SYS_MSG_JIG_7000_RDY);
+
+    // activate on high-to-low transition
+    P3IES |= BIT7;
+    // enable interrupt
+    P3IE |= BIT7;
 }
 
 void jig_set_output(const uint8_t type)

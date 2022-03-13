@@ -26,8 +26,8 @@
 //#define        SYS_MSG_TIMERA0_CCR1  0x1      // timer_a0_delay_noblk_ccr1
 //#define        SYS_MSG_TIMERA0_CCR2  0x2      // timer_a0_delay_noblk_ccr2
 #define        SYS_MSG_TIMERA1_CCR0  0x4      // IR decoder
-//#define        SYS_MSG_TIMERA1_CCR2  0x8      // timer_a1_delay_noblk_ccr2
-//#define          SYS_MSG_TIMER0_IFG  0x10     // timer0 overflow
+#define          SYS_MSG_VFD_TX_RDY  0x8      // vfd display ready to receive
+#define        SYS_MSG_JIG_7000_RDY  0x10     // 7000 jig is ready for new reading
 #define         SYS_MSG_UART_BCL_RX  0x20     // UART received something
 #define             SYS_MSG_P31_INT  0x80     // P3.1 interrupt
 #define        SYS_MSG_SCH_POWEROFF  0x100    // timer_a2 schedule slot

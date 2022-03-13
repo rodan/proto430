@@ -42,7 +42,11 @@ extern struct ts t;
 
 void main_init(void)
 {
-    P3DIR = 0xfd;
+    P3DIR = 0x3d;
+
+    // activate pullup
+    P3OUT = 0xc0;
+    P3REN = 0xc0;
 
     // IRQ triggers on rising edge
     P3IES &= ~BIT1;
@@ -372,6 +376,13 @@ void check_events(void)
         uart_rst_event(&bc);
     }
     #if 0
+    // vfd
+    if (VFD_get_event(NULL) & VFD_EV_RDY) {
+        msg |= SYS_MSG_VFD_TX_RDY;
+        VFD_rst_event(NULL);
+    }
+    #endif
+    #if 0
     // timer_a0
     ev = timer_a0_get_event();
     if (ev) {
@@ -445,6 +456,10 @@ void check_events(void)
             msg |= SYS_MSG_P31_INT;
             port3_last_event ^= BIT1;
         }
+        if (port3_last_event & BIT7) {
+            msg |= SYS_MSG_JIG_7000_RDY;
+            port3_last_event ^= BIT7;
+        }
         port3_last_event = 0;
     }
     // push button P5.x
@@ -498,7 +513,6 @@ int main(void)
 #endif
 
     adc_init(ADC_2_CELL);
-    // jig_init();
 
     rot_enc_init();
 
@@ -511,6 +525,7 @@ int main(void)
 
     EERAM_48L_init();
     VFD_init();
+    jig_7000_init();
 
     sig0_off;
     sig1_off;
@@ -605,6 +620,10 @@ void __attribute__ ((interrupt(PORT3_VECTOR))) port3_isr_handler(void)
         // listen for opposite edge
         P3IES ^= BIT1;
         //P3IFG &= ~TRIG1;
+        _BIC_SR_IRQ(LPM3_bits);
+        break;
+    case P3IV__P3IFG7:
+        port3_last_event |= BIT7;
         _BIC_SR_IRQ(LPM3_bits);
         break;
     }

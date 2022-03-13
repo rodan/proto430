@@ -4,6 +4,8 @@
 extern spi_descriptor spid_vfd;
 extern vfd_descriptor vfdd;
 
+#define VFD_EV_NULL  0
+#define  VFD_EV_RDY  1
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,6 +17,9 @@ uint8_t VFD_BSY(void);
 void VFD_RST_assert(void);
 void VFD_RST_deassert(void);
 void VFD_init(void);
+
+uint8_t VFD_get_event(const vfd_descriptor *vfd);
+void VFD_rst_event(uart_descriptor *vfd);
 
 #ifdef __cplusplus
 }
