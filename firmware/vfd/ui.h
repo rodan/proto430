@@ -10,4 +10,6 @@ void parse_user_input(void);
 
 void ui_vfd_refresh(void);
 
+extern uint8_t jig_data[23];
+
 #endif

@@ -24,7 +24,7 @@
 
 #define                SYS_MSG_NULL  0
 //#define        SYS_MSG_TIMERA0_CCR1  0x1      // timer_a0_delay_noblk_ccr1
-//#define        SYS_MSG_TIMERA0_CCR2  0x2      // timer_a0_delay_noblk_ccr2
+//#define        SYS_MSG_JIG_MEAS_RDY  0x2      // jig has fresh measurements
 #define        SYS_MSG_TIMERA1_CCR0  0x4      // IR decoder
 #define          SYS_MSG_VFD_TX_RDY  0x8      // vfd display ready to receive
 #define        SYS_MSG_JIG_7000_RDY  0x10     // 7000 jig is ready for new reading
@@ -60,7 +60,12 @@
 //#define          POWER_SAVING_DELAY 1440000UL // 4h 100=1s, 6000=1m
 #define          POWER_SAVING_DELAY 8640000UL // 24h 100=1s, 6000=1m
 
+#define        FM24_SLAVE_ADDR  0x50
+//#define        FM24_SLAVE_ADDR  0x58
+
 void check_events(void);
 void halt(void);
+void spi_pause(void);
+void spi_resume(void);
 
 #endif

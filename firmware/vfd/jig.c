@@ -14,12 +14,12 @@ struct jig_t *jig_get_p(void)
     return &jig;
 }
 
-void jig_7000_CS_high()
+void jig_7000_CS_high(void)
 {
     P5OUT |= BIT3;
 }
 
-void jig_7000_CS_low()
+void jig_7000_CS_low(void)
 {
     P5OUT &= ~BIT3;
 }
@@ -41,6 +41,24 @@ static void jig_7000_rdy(uint32_t msg)
 {
 
 
+}
+
+void jig_7000_read(const uint16_t addr, uint8_t *data, const uint8_t count)
+{
+    uint8_t tx_cmd[2];
+
+    tx_cmd[0] = (addr & 0x7f00 ) >> 8;
+    tx_cmd[1] = addr & 0xff;
+
+    spi_resume();
+    spid_jig_7000.cs_low();
+    __delay_cycles(SPI_DELAY);
+    spi_write_frame(spid_jig_7000.baseAddress, tx_cmd, 2);
+    spi_read_frame(spid_jig_7000.baseAddress, data, count);
+    __delay_cycles(SPI_DELAY);
+    spid_jig_7000.cs_high();
+
+    spi_pause();
 }
 
 void jig_7000_init(void)

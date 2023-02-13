@@ -131,6 +131,33 @@ void spi_init(void)
 #endif
 }
 
+void spi_pause(void)
+{
+    // zero out BSY signal
+    //P3IE &= ~BIT7;
+    //P3OUT &= ~BIT7;
+
+    // zero out SPI pins
+    //P5SEL0 &= ~(BIT0 | BIT1 | BIT2);
+    //P5SEL1 &= ~(BIT0 | BIT1 | BIT2);
+    //P5DIR &= ~(BIT0 | BIT1 | BIT2 | BIT3);
+    //P5OUT &= ~(BIT0 | BIT1 | BIT2);
+    //P5REN |= BIT0 | BIT1 | BIT2;
+}
+
+void spi_resume(void)
+{
+    // restore BSY signal
+    //P3IFG &= ~BIT7;
+    //P3OUT |= BIT7;
+    //P3IE |= BIT7;
+
+    // restore SPI pins
+    //P5REN &= (BIT0 | BIT1 | BIT2);
+    //spi_pin_init();
+    //P5DIR |= BIT3;
+}
+
 static void button_31_irq(uint32_t msg)
 {
     if (P3IN & BIT1) {
@@ -159,6 +186,15 @@ static void button_31_irq(uint32_t msg)
         timer_a2_set_trigger_slot(SCHEDULE_PB_31_OFF, 0, TIMER_A2_EVENT_DISABLE);
         // IRQ triggers on rising edge
         P3IES &= ~BIT1;
+    }
+}
+
+static void jig_ready_handler(uint32_t msg)
+{
+    jig_7000_read(0x0, jig_data, 23);
+    
+    if (P1OUT & BIT2) {
+        ui_vfd_refresh();
     }
 }
 
@@ -206,8 +242,8 @@ static void button_57_long_press_irq(uint32_t msg)
     uart_print(&bc, "PB57 long\r\n");
 
     rail_5v_on;
-    timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
-    timer_a2_set_trigger_slot(SCHEDULE_RTC_REFRESH, systime()+20, TIMER_A2_EVENT_ENABLE);
+    //timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
+    //timer_a2_set_trigger_slot(SCHEDULE_RTC_REFRESH, systime()+20, TIMER_A2_EVENT_ENABLE);
 }
 
 /*
@@ -245,11 +281,13 @@ void halt(void)
     sig4_off;
 }
 
+/*
 static void vfd_refresh(uint32_t msg)
 {
     ui_vfd_refresh();
     timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
 }
+*/
 
 static void rtc_refresh(uint32_t msg)
 {
@@ -493,6 +531,9 @@ int main(void)
 #endif
 
     main_init();
+    EERAM_48L_CS_high();
+    VFD_CS_high();
+    jig_7000_CS_high();
 
     clock_pin_init();
     clock_init();
@@ -526,6 +567,7 @@ int main(void)
     EERAM_48L_init();
     VFD_init();
     jig_7000_init();
+    spi_pause();
 
     sig0_off;
     sig1_off;
@@ -554,8 +596,10 @@ int main(void)
     eh_register(&adc_rdy_irq, SYS_MSG_ADC_CONV_RDY);
 
     eh_register(&scheduler_irq, SYS_MSG_TIMERA2_CCR1);
-    eh_register(&vfd_refresh, SYS_MSG_VFD_REFRESH);
+    //eh_register(&vfd_refresh, SYS_MSG_VFD_REFRESH);
     eh_register(&rtc_refresh, SYS_MSG_RTC_REFRESH);
+    
+    eh_register(&jig_ready_handler, SYS_MSG_JIG_7000_RDY);
 
     timer_a2_set_trigger_slot(SCHEDULE_POWER_SAVING, POWER_SAVING_DELAY, TIMER_A2_EVENT_ENABLE);
 //    timer_a2_set_trigger_slot(SCHEDULE_LED_ON, 200, TIMER_A2_EVENT_ENABLE);

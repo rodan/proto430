@@ -7,10 +7,14 @@
 #include "eeram_48l_extra.h"
 #include "vfd_extra.h"
 #include "rtca_now.h"
+#include "jig.h"
 #include "ui.h"
+
+#define TEST_CYPRESS_FM24
 
 extern uart_descriptor bc;
 uint8_t brightness = 1;
+uint8_t jig_data[23];
 
 #ifdef CONFIG_DS3231
     struct ts t;
@@ -21,6 +25,7 @@ static const char menu_str[]="\
 \033[33;1m?\033[0m  - show menu\r\n\
 \033[33;1m5v on/off\033[0m  - control 5v rail\r\n\
 \033[33;1mtr/tw\033[0m  - test rtc\r\n\
+\033[33;1mtj\033[0m     - test jig\r\n\
 \033[33;1msr/sw\033[0m  - test eeram\r\n";
 
 //uint8_t refresh_timer;
@@ -40,21 +45,69 @@ void display_version(void)
     uart_print(&bc, "\r\n");
 }
 
+#ifdef TEST_CYPRESS_FM24
+void print_buf_fram(const uint32_t address, const uint32_t size)
+{
+    uint32_t bytes_remaining = size;
+    uint32_t bytes_to_be_printed, bytes_printed = 0;
+    char itoa_buf[CONV_BASE_10_BUF_SZ];
+    uint16_t i;
+    uint8_t *read_ptr = NULL;
+    uint8_t row[16];
+
+    while (bytes_remaining > 0) {
+    
+        if (bytes_remaining > 16) {
+            bytes_to_be_printed = 16;
+        } else {
+            bytes_to_be_printed = bytes_remaining;
+        }
+
+        uart_print(&bc, _utoh32(itoa_buf, bytes_printed));
+        uart_print(&bc, ": ");
+
+        memset(row, 0xee, 16);
+        if ( FM24_read(I2C_BASE_ADDR, FM24_SLAVE_ADDR, row, address + bytes_printed, bytes_to_be_printed) != EXIT_SUCCESS) {
+            uart_print(&bc, "transfer err\r\n");
+            return;
+        }
+
+        read_ptr = &row[0];
+
+        for (i = 0; i < bytes_to_be_printed; i++) {
+            uart_print(&bc, _utoh8(itoa_buf, *read_ptr++));
+            if (i & 0x1) {
+                uart_print(&bc, " ");
+            }
+        }
+
+        //uart_print(&bc, " ");
+        //read_ptr = &row[0];
+        //for (i = 0; i < bytes_to_be_printed; i++) {
+        //    uart_tx_str(&bc, (char *)read_ptr++, 1);
+        //}
+
+        uart_print(&bc, "\r\n");
+        bytes_printed += bytes_to_be_printed;
+        bytes_remaining -= bytes_to_be_printed;
+    }
+}
+#endif
+
 void ui_vfd_refresh(void)
 {
     char sconv[CONV_BASE_10_BUF_SZ];
-    uint16_t rnd;
-    uint8_t data[3];
+    //uint16_t rnd;
+    uint8_t data[4];
 
-#ifdef CONFIG_DS3231
-    //memset(&t, 0, sizeof(struct ts));
-    //DS3231_get(I2C_BASE_ADDR, &t);
-#endif
+    struct meas_ec *p;
 
-    rnd = 146 - (rand() % 20);
+    p = (struct meas_ec *) jig_data;
+
+    //rnd = 146 - (rand() % 20);
 
     //if (!refresh_timer) {
-    //    vfd_cmd_clear(&vfdd);
+    //vfd_cmd_clear(&vfdd);
     //    refresh_timer = 5;
     //}
 
@@ -63,27 +116,127 @@ void ui_vfd_refresh(void)
     data[2] = brightness;
     vfd_tx_str(&vfdd, (char *)data, 3);
 
-    //vfd_cmd_clear(&vfdd);
-    //vfd_tx_str(&vfdd, (char *) test_str, 7);
-    //vfd_print(&vfdd, "Hello");
-    vfd_us_cmd(&vfdd, 'g', 0x40);
-    vfd_tx(&vfdd, 2);
-    vfd_tx(&vfdd, 2);
-    vfd_print(&vfdd, " ");
-    vfd_print(&vfdd, _utoa(sconv, rnd));
-    vfd_print(&vfdd, ".1 ");
-    vfd_tx(&vfdd, 0xe6);
-    vfd_print(&vfdd, "S ");
+    //vfd_set_font_style(&vfdd, 1, 1);
 
-    rnd = 25 - (rand() % 3);
-    vfd_us_cmd(&vfdd, 'g', 0x40);
-    vfd_tx(&vfdd, 1);
-    vfd_tx(&vfdd, 1);
-    vfd_print(&vfdd, "                    ");
-    vfd_print(&vfdd, "   ");
-    vfd_print(&vfdd, _utoa(sconv, rnd));
-    vfd_tx(&vfdd, 0xf8);
-    vfd_print(&vfdd, "C   ");
+    // set prompt to first pixel
+    data[0] = 0x1f;
+    data[1] = '$';
+    vfd_tx_str(&vfdd, (char *)data, 2);
+    vfd_cmd_xy(&vfdd, 0, 0);
+
+    // set big font
+    vfd_set_font_size(&vfdd, 2, 2, 1);
+    vfd_print(&vfdd, " ");
+
+    if (p->ec > 999999999) {
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, (p->ec + 5000000) / 1000000000), PAD_SPACES, 3));
+        vfd_print(&vfdd, ".");
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, (p->ec + 5000000) % 1000000000 / 10000000), PAD_ZEROES, 2));
+
+        // set prompt to meas unit
+        data[0] = 0x1f;
+        data[1] = '$';
+        vfd_tx_str(&vfdd, (char *)data, 2);
+        vfd_cmd_xy(&vfdd, 102, 0);
+        vfd_print(&vfdd, " S");
+
+    } else if (p->ec > 999999) {
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, (p->ec + 5000) / 1000000), PAD_SPACES, 3));
+        vfd_print(&vfdd, ".");
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, (((p->ec + 5000) % 1000000) / 10000)), PAD_ZEROES, 2));
+
+        // set prompt to meas unit
+        data[0] = 0x1f;
+        data[1] = '$';
+        vfd_tx_str(&vfdd, (char *)data, 2);
+        vfd_cmd_xy(&vfdd, 102, 0);
+
+        vfd_print(&vfdd, "mS");
+    } else if (p->ec > 999) {
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, (p->ec + 5) / 1000), PAD_SPACES, 3));
+        vfd_print(&vfdd, ".");
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, ((p->ec + 5) % 1000) / 10), PAD_ZEROES, 2));
+
+        // set prompt to meas unit
+        data[0] = 0x1f;
+        data[1] = '$';
+        vfd_tx_str(&vfdd, (char *)data, 2);
+        vfd_cmd_xy(&vfdd, 102, 0);
+
+        vfd_tx(&vfdd, 0xe6);
+        vfd_print(&vfdd, "S");
+    } else {
+        vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, p->ec), PAD_SPACES, 6));
+
+        // set prompt to meas unit
+        data[0] = 0x1f;
+        data[1] = '$';
+        vfd_tx_str(&vfdd, (char *)data, 2);
+        vfd_cmd_xy(&vfdd, 102, 0);
+
+        vfd_print(&vfdd, "nS");
+    }
+
+    // set small font
+    vfd_set_font_size(&vfdd, 1, 1, 1);
+
+    // automatic or manual ranging
+    data[0] = 0x1f;
+    data[1] = '$';
+    vfd_tx_str(&vfdd, (char *)data, 2);
+    vfd_cmd_xy(&vfdd, 132, 0);
+
+    //vfd_invert_on(&vfdd);
+
+    if (p->range & 0x1) {
+        vfd_print(&vfdd, "m");
+    } else {
+        vfd_print(&vfdd, "a");
+    }
+
+    data[0] = 0x1f;
+    data[1] = '$';
+    vfd_tx_str(&vfdd, (char *)data, 2);
+    vfd_cmd_xy(&vfdd, 132, 8);
+
+    vfd_print(&vfdd, _utoa(sconv, p->range >> 1));
+    //vfd_invert_off(&vfdd);
+
+    // line 3
+    // set prompt to first pixel, last line
+    data[0] = 0x1f;
+    data[1] = '$';
+    vfd_tx_str(&vfdd, (char *)data, 2);
+    vfd_cmd_xy(&vfdd, 0, 24);
+
+    vfd_print(&vfdd, " ");
+
+    // temperature value
+
+    if (p->temp < -10) {
+        vfd_print(&vfdd, "  t Ovf");
+    } else if (p->temp < 0) {
+        vfd_print(&vfdd, prepend_padding(sconv, _itoa(sconv, (p->temp + 5) / 100), PAD_SPACES, 3));
+        vfd_print(&vfdd, ".");
+        vfd_print(&vfdd, _utoa(sconv, (((0 - p->temp + 5) / 10) % 10)));
+        vfd_tx(&vfdd, 0xf8);
+        vfd_print(&vfdd, "C");
+    } else if (p->temp < 20000) {
+        vfd_print(&vfdd, prepend_padding(sconv, _itoa(sconv, (p->temp + 5) / 100), PAD_SPACES, 3));
+        vfd_print(&vfdd, ".");
+        vfd_print(&vfdd, _utoa(sconv, (((p->temp + 5) / 10) % 10)));
+        vfd_tx(&vfdd, 0xf8);
+        vfd_print(&vfdd, "C");
+    } else {
+        vfd_print(&vfdd, "  t Ovf");
+    }
+
+
+    // set prompt to data area
+    data[0] = 0x1f;
+    data[1] = '$';
+    vfd_tx_str(&vfdd, (char *)data, 2);
+    vfd_cmd_xy(&vfdd, 84, 24);
 
 #ifdef CONFIG_DS3231
     vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.hour), PAD_ZEROES, 2));
@@ -92,6 +245,8 @@ void ui_vfd_refresh(void)
     vfd_print(&vfdd, ":");
     vfd_print(&vfdd, prepend_padding(sconv, _utoa(sconv, t.sec), PAD_ZEROES, 2));
 #endif
+
+    timer_a2_set_trigger_slot(SCHEDULE_RTC_REFRESH, systime()+20, TIMER_A2_EVENT_ENABLE);
 }
 
 #define PARSER_CNT 16
@@ -124,6 +279,7 @@ void parse_user_input(void)
     char sconv[CONV_BASE_10_BUF_SZ];
 #endif
 
+
     if (f == '?') {
         display_menu();
     } else if (strstr(input, "5v on")) {
@@ -142,6 +298,15 @@ void parse_user_input(void)
         EERAM_48L_read_streg(&spid_eeram, &val);
     } else if (strstr(input, "sw")) {
         EERAM_48L_write_streg(&spid_eeram, EERAM_48L512_SR_ASE );
+    } else if (strstr(input, "tj")) {
+        jig_7000_read(0x0, jig_data, 23);
+#ifdef TEST_CYPRESS_FM24
+    } else if (f == 'h') {
+        //print_buf_fram(0x0, 0x4);
+        //print_buf_fram(0x0, 0xaa10);
+        print_buf_fram(0x1835, 0x80);
+        //print_buf_fram(0x0, 0xffff);
+#endif
 #ifdef CONFIG_DS3231
     } else if (strstr(input, "tr")) {
         DS3231_get(I2C_BASE_ADDR, &t);
