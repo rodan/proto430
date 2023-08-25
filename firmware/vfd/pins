@@ -3,36 +3,60 @@
 
 1.0 - sig0
 1.1 - sig1
-1.2 - 5v_en
-1.3 - sig2
-1.4 - sig3
-1.5 - sig4
+1.2 - 5v_en (bp)
+1.3 - 3v_en (bp)
+1.4 - sig3 (bp)
+1.5 - sig4 (bp)
 
-2.0 - uart0
-2.1 - uart0
+2.0 - uart0 (db)
+2.1 - uart0 (db)
+2.5 - eeram HOLD (bp)
+2.6 - eeram CS (bp)
 
-3.0 - 3v3_en
-3.1 - power button trigger, 3v3_analog
-3.2 - 5v_analog
-3.3 - input or id measurement
+3.0 - 5v_analog_en (bp)
+3.1 - power button trigger, 3v_analog (bp)
+3.2 - 5v_analog (bp)
+3.3 - sig2 (bp)
+3.4 - buzzer 1(bp)
+3.5 - buzzer 2(bp)
+3.6 - spi pin4 (bp)
+3.7 - spi pin2 RDY/INT (bp)
 
+4.1 - (bp)
+4.2 - (bp)
+4.3 - (bp)
+4.4 - vfd BSY (bp)
+4.7 - (bp)
+
+5.0 - spi MOSI (bp)
+5.1 - spi MISO (bp)
+5.2 - spi CLK (bp)
+5.3 - spi CS (bp) (output)
 5.5 - button
 5.6 - button
-5.7 - pwm
+5.7 - rotary sw (bp)
 
-6.0 - uart3
-6.1 - uart3
-6.2 - rs_pwr - used by external intelligent DO probe
-6.3 - dir for rs485
+6.0 -  (bp)
+6.1 -  (bp)
+6.2 -  (bp)
+6.3 - ir remote (bp)
 
-7.0 - i2c
-7.1 - i2c
+7.0 - i2c SDA (bp)
+7.1 - i2c SCL (bp)
+7.3 - vfd ~RST (bp)
 
-J.4 - XT1
-J.5 - XT1
-J.6 - XT2
-J.7 - XT2
+8.0 - (bp)
+8.1 - rotary A (bp)
+8.2 - rotary B (bp)
+8.3 - vfd CS (bp)
 
+J.4 - XT1 (db)
+J.5 - XT1 (db)
+J.6 - XT2 (db)
+J.7 - XT2 (db)
+
+db - ti exp430fr5994 dev board
+bp - vfd boosterpack
 
 UCA0 - uart0 backchannel console (P2.0 TXD, P2.1 RXD)
 UCA1 - unused (P2.5 P2.6)
