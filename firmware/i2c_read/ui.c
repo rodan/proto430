@@ -120,6 +120,10 @@ void display_menu(void)
     display_version();
     uart_print(&bc, menu_str);
     uart_print(&bc, menu_eeprom);
+#ifdef TEST_CYPRESS_FM24
+    uart_print(&bc, menu_CYPRESS_FM24);
+#endif
+
 }
 
 void display_version(void)
