@@ -105,7 +105,7 @@ $(OBJ_DIR)/%.o: %.c config.h
 
 $(EXOUTPUT): $(LOCAL_OBJECTS) $(EXOBJECT) $(OBJ_DIR)/libatlas430.a
 	@echo -e "\n>> Building $@ as target $(CTARGET)"
-	$(CC) $(LDFLAGS) $(LOCAL_OBJECTS) -L$(OBJ_DIR) -latlas430 -o $@
+	@$(CC) $(LDFLAGS) $(LOCAL_OBJECTS) -L$(OBJ_DIR) -latlas430 -o $@
 
 mkdir_od:
 	@mkdir -p $(OBJ_DIR) || echo ""
@@ -136,15 +136,15 @@ $(OBJ_DIR)/$(PROJ).dep: $(SRC)
 	@echo "Generating dependencies.."
 	@mkdir -p $(OBJ_DIR)
 	@touch $@
-	@makedepend $(INCLUDES) -p "$(OBJ_DIR)/" -Y -f $@ $^ &> /dev/null
-	@sed -i "s|$(OBJ_DIR)/$(ATLAS430_SYS)/|$(OBJ_DIR)/|;s|$(OBJ_DIR)/$(ATLAS430)/|$(OBJ_DIR)/|;s|$(OBJ_DIR)/$(DRIVERLIB)/|$(OBJ_DIR)/|" $(OBJ_DIR)/main.dep
+	@makedepend $(INCLUDES) $(MACROS) -D__$(DEVICE)__ -p "$(OBJ_DIR)/" -Y -f $@ $^ 1>/dev/null 2>&1
+	@gsed -i "s|$(OBJ_DIR)/$(ATLAS430_SYS)/|$(OBJ_DIR)/|;s|$(OBJ_DIR)/$(ATLAS430)/|$(OBJ_DIR)/|;s|$(OBJ_DIR)/$(DRIVERLIB)/|$(OBJ_DIR)/|" $(OBJ_DIR)/main.dep
 	@grep -v ^\# $(OBJ_DIR)/$(PROJ).dep | cut -d" " -f2 | sort -u | xargs > $(OBJ_DIR)/$(PROJ).hdep
 	@echo "tags: `cat $(OBJ_DIR)/$(PROJ).hdep`" >> $(OBJ_DIR)/$(PROJ).dep
 	@rm -f $@.bak
 
 tags: $(PROJ_SRC) $(DRIVERLIB_SRC) $(ATLAS430_SRC) $(ATLAS430_SYS_SRC) $(LOCAL_SRC) $(OBJ_DIR)/$(PROJ).dep
 	@echo "Generating tags .."
-	@exuberant-ctags --recurse=yes ./ $(DRIVERLIB) $(ATLAS430) $(ATLAS430_SYS) $(LDDIR).h $(shell cat $(OBJ_DIR)/$(PROJ).hdep)
+	@$(CTAGS) --recurse=yes ./ $(DRIVERLIB) $(ATLAS430) $(ATLAS430_SYS) $(LDDIR).h $(shell cat $(OBJ_DIR)/$(PROJ).hdep)
 
 new_timestamps:
 	@$(BASH) $(REFLIB_ROOT)/tools/update_rtca_now.sh
