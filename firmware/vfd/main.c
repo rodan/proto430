@@ -189,6 +189,7 @@ static void button_31_irq(uint32_t msg)
     }
 }
 
+#if 0
 static void jig_ready_handler(uint32_t msg)
 {
     jig_7000_read(0x0, jig_data, 23);
@@ -197,6 +198,7 @@ static void jig_ready_handler(uint32_t msg)
         ui_vfd_refresh();
     }
 }
+#endif
 
 static void button_55_irq(uint32_t msg)
 {
@@ -599,7 +601,7 @@ int main(void)
     //eh_register(&vfd_refresh, SYS_MSG_VFD_REFRESH);
     eh_register(&rtc_refresh, SYS_MSG_RTC_REFRESH);
     
-    eh_register(&jig_ready_handler, SYS_MSG_JIG_7000_RDY);
+    //eh_register(&jig_ready_handler, SYS_MSG_JIG_7000_RDY);
 
     timer_a2_set_trigger_slot(SCHEDULE_POWER_SAVING, POWER_SAVING_DELAY, TIMER_A2_EVENT_ENABLE);
 //    timer_a2_set_trigger_slot(SCHEDULE_LED_ON, 200, TIMER_A2_EVENT_ENABLE);

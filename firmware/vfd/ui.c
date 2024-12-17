@@ -10,7 +10,12 @@
 #include "jig.h"
 #include "ui.h"
 
-#define TEST_CYPRESS_FM24
+//#define TEST_CYPRESS_FM24
+#define TEST_HBMPS
+//#define TEST_JIG
+//#define TEST_VFD
+//#define TEST_EERAM
+#define TEST_RTC
 
 extern uart_descriptor bc;
 uint8_t brightness = 1;
@@ -23,10 +28,22 @@ uint8_t jig_data[23];
 static const char menu_str[]="\
  available commands:\r\n\r\n\
 \033[33;1m?\033[0m  - show menu\r\n\
-\033[33;1m5v on/off\033[0m  - control 5v rail\r\n\
-\033[33;1mtr/tw\033[0m  - test rtc\r\n\
-\033[33;1mtj\033[0m     - test jig\r\n\
-\033[33;1msr/sw\033[0m  - test eeram\r\n";
+\033[33;1m5v on/off\033[0m  - control 5v rail\r\n";
+
+#ifdef TEST_RTC
+static const char menu_str_rtc[]="\
+\033[33;1mtr/tw\033[0m  - test rtc\r\n";
+#endif
+
+#ifdef TEST_JIG
+static const char menu_str_jig[]="\
+\033[33;1mtj\033[0m     - test jig\r\n";
+#endif
+
+#ifdef TEST_HBMPS
+static const char menu_str_hbmps[]="\
+\033[33;1mpr\033[0m     - test hbmps\r\n";
+#endif
 
 //uint8_t refresh_timer;
 
@@ -34,13 +51,23 @@ void display_menu(void)
 {
     display_version();
     uart_print(&bc, menu_str);
+#ifdef TEST_RTC
+    uart_print(&bc, menu_str_rtc);
+#endif
+#ifdef TEST_JIG
+    uart_print(&bc, menu_str_jig);
+#endif
+#ifdef TEST_HBMPS
+    uart_print(&bc, menu_str_hbmps);
+#endif
+
 }
 
 void display_version(void)
 {
     char sconv[CONV_BASE_10_BUF_SZ];
 
-    uart_print(&bc, "vfd demo b");
+    uart_print(&bc, "proto430 b");
     uart_print(&bc, _utoa(sconv, BUILD));
     uart_print(&bc, "\r\n");
 }
@@ -94,6 +121,7 @@ void print_buf_fram(const uint32_t address, const uint32_t size)
 }
 #endif
 
+#ifdef TEST_VFD
 void ui_vfd_refresh(void)
 {
     char sconv[CONV_BASE_10_BUF_SZ];
@@ -248,8 +276,22 @@ void ui_vfd_refresh(void)
 
     timer_a2_set_trigger_slot(SCHEDULE_RTC_REFRESH, systime()+20, TIMER_A2_EVENT_ENABLE);
 }
+#endif
 
 #define PARSER_CNT 16
+
+// see hsc_ssc.h for a description of these values
+// these defaults are valid for the HSCMRNN030PA2A3 chip
+#define SLAVE_ADDR 0x28
+//#define OUTPUT_MIN 0
+//#define OUTPUT_MAX 0x3fff       // 2^14 - 1
+//#define PRESSURE_MIN 0.0        // min is 0 for sensors that give absolute values
+//#define PRESSURE_MAX 206842.7   // 30psi (and we want results in pascals)
+
+#define OUTPUT_MIN 0x666
+#define OUTPUT_MAX 0x399A       // 2^14 - 1
+#define PRESSURE_MIN 0.0        // min is 0 for sensors that give absolute values
+#define PRESSURE_MAX 206842.7   // 30psi (and we want results in pascals)
 
 void parse_user_input(void)
 {
@@ -273,10 +315,18 @@ void parse_user_input(void)
 #endif
     char f = input[0];
     //uint32_t in=0;
+#ifdef TEST_EERAM
     uint8_t val = 0;
+#endif
 #ifdef CONFIG_DS3231
     struct ts t;
     char sconv[CONV_BASE_10_BUF_SZ];
+#endif
+#ifdef TEST_HBMPS
+    uint32_t pressure;
+    int16_t temperature;
+    //struct HSC_SSC_pkt ps;
+    struct hbmps_pkt ps_pkt;
 #endif
 
 
@@ -288,27 +338,72 @@ void parse_user_input(void)
     } else if (strstr(input, "5v off")) {
         timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, 0, TIMER_A2_EVENT_DISABLE);
         rail_5v_off;
-    } else if (strstr(input, "vfd")) {
+    }
+#ifdef TEST_VFD
+    else if (strstr(input, "vfd")) {
         ui_vfd_refresh();
         //timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, systime()+100, TIMER_A2_EVENT_ENABLE);
     } else if (strstr(input, "clr")) {
         timer_a2_set_trigger_slot(SCHEDULE_VFD_REFRESH, 0, TIMER_A2_EVENT_DISABLE);
         vfd_cmd_clear(&vfdd);
-    } else if (strstr(input, "sr")) {
+    }
+#endif
+
+#ifdef TEST_EERAM
+    else if (strstr(input, "sr")) {
         EERAM_48L_read_streg(&spid_eeram, &val);
     } else if (strstr(input, "sw")) {
         EERAM_48L_write_streg(&spid_eeram, EERAM_48L512_SR_ASE );
-    } else if (strstr(input, "tj")) {
+    }
+#endif
+
+#ifdef TEST_HBMPS
+    else if (strstr(input, "pr")) {
+#if 0
+        HSC_SSC_read(I2C_BASE_ADDR, SLAVE_ADDR, &ps);
+        HSC_SSC_convert(ps, &pressure, &temperature, OUTPUT_MIN, OUTPUT_MAX, PRESSURE_MIN,
+                   PRESSURE_MAX);
+#else
+        hbmps_read(I2C_BASE_ADDR, SLAVE_ADDR, &ps_pkt);
+        hbmps_convert(ps_pkt, &pressure, &temperature, OUTPUT_MIN, OUTPUT_MAX, PRESSURE_MIN,
+                   PRESSURE_MAX);
+#endif
+
+        uart_print(&bc, "status: ");
+        uart_print(&bc, _utoh(sconv, ps_pkt.status));
+        uart_print(&bc, "\r\nbridge_data: ");
+        uart_print(&bc, _utoh(sconv, ps_pkt.bridge_data));
+        uart_print(&bc, "\r\ntemperature_data: ");
+        uart_print(&bc, _utoh(sconv, ps_pkt.temperature_data));
+        uart_print(&bc, "\r\npressure: ");
+        uart_print(&bc, _utoa(sconv, pressure));
+        uart_print(&bc, "\r\ntemperature: ");
+        if ( temperature<0 ) {
+            uart_print(&bc, "-");
+        }
+        uart_print(&bc, _utoa(sconv, abs(temperature / 100)));
+        uart_print(&bc, ".");
+        uart_print(&bc, prepend_padding(sconv, _utoa(sconv, abs(temperature % 100)), PAD_ZEROES, 2));
+        uart_print(&bc, "\r\n");
+    }
+#endif
+
+#ifdef TEST_JIG
+    else if (strstr(input, "tj")) {
         jig_7000_read(0x0, jig_data, 23);
+    }
+#endif
+
 #ifdef TEST_CYPRESS_FM24
-    } else if (f == 'h') {
+    else if (f == 'h') {
         //print_buf_fram(0x0, 0x4);
         //print_buf_fram(0x0, 0xaa10);
         print_buf_fram(0x1835, 0x80);
         //print_buf_fram(0x0, 0xffff);
+    }
 #endif
 #ifdef CONFIG_DS3231
-    } else if (strstr(input, "tr")) {
+    else if (strstr(input, "tr")) {
         DS3231_get(I2C_BASE_ADDR, &t);
 
         uart_print(&bc, _utoa(sconv, t.year));
@@ -344,8 +439,10 @@ void parse_user_input(void)
         t.unixtime = 0;
 #endif
         DS3231_set(I2C_BASE_ADDR, t);
+    }
 #endif
-    } else {
+
+    else {
         //uart_tx_str("\r\n", 2);
     }
 }
